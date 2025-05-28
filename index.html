@@ -13,14 +13,174 @@
   <div class="max-w-3xl mx-auto p-6">
     <h1 class="text-3xl font-extrabold text-center text-gray-900 mb-6">Enhanced Threat Detection and Contextual Analysis</h1>
 
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
-      <strong class="block text-lg text-blue-700 mb-2">How it works:</strong>
-      <ul class="list-disc list-inside space-y-1 text-gray-700">
-        <li><strong>Feature Extraction</strong>: Converts text into numeric inputs—word count (normalized), weighted keyword score, CWE/ATT&CK flags from metadata.</li>
-        <li><strong>Linear Model (Logits)</strong>: Applies weights & bias (<code class="bg-gray-100 px-1 rounded">logits = features·weights + bias</code>), computing raw scores.</li>
-        <li><strong>Activation (Sigmoid)</strong>: Transforms logits into class probabilities (<code class="bg-gray-100 px-1 rounded">sigmoid(x) = 1/(1+e<sup>-x</sup>)</code>).</li>
-        <li><strong>Decision</strong>: Compare P(threat) vs. P(non-threat); the higher wins.</li>
-      </ul>
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8 border-4 border-gradient-to-r from-purple-400 to-pink-400">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent mb-6 text-center border-b-4 border-gradient-to-r from-purple-400 to-pink-400 pb-4">
+            🤖 TensorFlow Concepts Explained Through Restaurant Food Quality Detection 🍽️
+        </h1>
+        
+        <!-- Feature Extraction Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-4 flex items-center">
+                <span class="bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full w-10 h-10 flex items-center justify-center text-white text-sm font-bold mr-3 shadow-lg">1</span>
+                🔍 Feature Extraction - Like a Food Inspector's Checklist
+            </h2>
+            
+            <div class="bg-gradient-to-br from-blue-100 via-cyan-50 to-blue-200 p-6 rounded-xl mb-4 border-2 border-blue-300 shadow-lg">
+                <p class="text-gray-800 mb-4 text-lg font-medium">
+                    Imagine you're a health inspector evaluating restaurants. You can't just look at a restaurant and immediately know if it's good or bad - you need to convert your observations into measurable numbers:
+                </p>
+                
+                <div class="space-y-3">
+                    <div class="flex items-start bg-white p-3 rounded-lg shadow-md border-l-4 border-green-400">
+                        <span class="text-green-500 mr-3 mt-1 text-xl">🧽</span>
+                        <span class="text-gray-700"><strong class="text-green-600">Count how many clean surfaces you see</strong> (like counting words in text)</span>
+                    </div>
+                    <div class="flex items-start bg-white p-3 rounded-lg shadow-md border-l-4 border-yellow-400">
+                        <span class="text-yellow-500 mr-3 mt-1 text-xl">👃</span>
+                        <span class="text-gray-700"><strong class="text-yellow-600">Rate the smell on a scale of 1-10</strong> (like weighting important keywords)</span>
+                    </div>
+                    <div class="flex items-start bg-white p-3 rounded-lg shadow-md border-l-4 border-red-400">
+                        <span class="text-red-500 mr-3 mt-1 text-xl">🚩</span>
+                        <span class="text-gray-700"><strong class="text-red-600">Check for specific red flags:</strong> expired food, dirty utensils, pests (like checking for threat indicators)</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-gradient-to-r from-white to-blue-50 rounded-lg border-l-4 border-blue-400 shadow-md">
+                    <p class="text-gray-700 font-medium">
+                        So instead of <span class="text-red-600 font-bold bg-red-100 px-2 py-1 rounded">"this place smells weird and has flies,"</span> you get concrete numbers: 
+                        <span class="font-mono bg-gradient-to-r from-purple-200 to-pink-200 px-3 py-2 rounded-lg font-bold text-purple-800 shadow-sm">[7 clean surfaces, smell score: 3/10, red flags: 2 violations]</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linear Model Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent mb-4 flex items-center">
+                <span class="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full w-10 h-10 flex items-center justify-center text-white text-sm font-bold mr-3 shadow-lg">2</span>
+                🧮 Linear Model (Logits) - Like Calculating a Restaurant Score
+            </h2>
+            
+            <div class="bg-gradient-to-br from-green-100 via-emerald-50 to-green-200 p-6 rounded-xl mb-4 border-2 border-green-300 shadow-lg">
+                <p class="text-gray-800 mb-4 text-lg font-medium">
+                    Now you take those numbers and create a preliminary score using a formula you've learned from experience:
+                </p>
+                
+                <div class="bg-gradient-to-br from-white to-green-50 p-6 rounded-xl border-2 border-green-200 shadow-lg space-y-3">
+                    <div class="flex justify-between items-center border-b-2 border-green-200 pb-3 bg-gradient-to-r from-green-50 to-white p-3 rounded-lg">
+                        <span class="text-gray-800 font-medium">🧽 Clean surfaces are worth 5 points each:</span>
+                        <span class="font-mono text-green-600 font-bold text-lg bg-green-100 px-3 py-1 rounded-full">7 × 5 = 35 points</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b-2 border-yellow-200 pb-3 bg-gradient-to-r from-yellow-50 to-white p-3 rounded-lg">
+                        <span class="text-gray-800 font-medium">👃 Smell penalty:</span>
+                        <span class="font-mono text-red-600 font-bold text-lg bg-red-100 px-3 py-1 rounded-full">3/10 × (-10) = -30 points</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b-2 border-red-200 pb-3 bg-gradient-to-r from-red-50 to-white p-3 rounded-lg">
+                        <span class="text-gray-800 font-medium">🚩 Violation penalty:</span>
+                        <span class="font-mono text-red-600 font-bold text-lg bg-red-100 px-3 py-1 rounded-full">2 × (-20) = -40 points</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b-2 border-blue-200 pb-3 bg-gradient-to-r from-blue-50 to-white p-3 rounded-lg">
+                        <span class="text-gray-800 font-medium">⭐ Base score (starting assumption):</span>
+                        <span class="font-mono text-blue-600 font-bold text-lg bg-blue-100 px-3 py-1 rounded-full">+10 points</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-xl pt-3 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl shadow-md border-2 border-purple-300">
+                        <span class="text-gray-800">🎯 Total raw score:</span>
+                        <span class="font-mono text-purple-700 bg-gradient-to-r from-purple-200 to-pink-200 px-4 py-2 rounded-full shadow-md">35 - 30 - 40 + 10 = -25</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-gradient-to-r from-white to-green-50 rounded-lg border-l-4 border-green-400 shadow-md">
+                    <p class="text-gray-700 font-medium">
+                        This <span class="font-bold text-purple-700 bg-purple-200 px-2 py-1 rounded-full">-25</span> is your <strong class="text-green-600">"logit"</strong> - a raw score that could be any number, positive or negative.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activation Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent mb-4 flex items-center">
+                <span class="bg-gradient-to-r from-purple-400 to-pink-400 rounded-full w-10 h-10 flex items-center justify-center text-white text-sm font-bold mr-3 shadow-lg">3</span>
+                📊 Activation (Sigmoid) - Like Converting to a Percentage Grade
+            </h2>
+            
+            <div class="bg-gradient-to-br from-purple-100 via-pink-50 to-purple-200 p-6 rounded-xl mb-4 border-2 border-purple-300 shadow-lg">
+                <p class="text-gray-800 mb-4 text-lg font-medium">
+                    A raw score of -25 doesn't tell customers much. The sigmoid function is like converting that raw score into a familiar percentage:
+                </p>
+                
+                <div class="bg-gradient-to-br from-white to-purple-50 p-6 rounded-xl border-2 border-purple-200 shadow-lg space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-gradient-to-r from-red-100 to-red-200 rounded-xl shadow-md border-2 border-red-300">
+                        <span class="text-gray-800 font-medium flex items-center">
+                            <span class="text-2xl mr-2">📉</span>
+                            Raw score -25 becomes
+                        </span>
+                        <span class="font-bold text-red-700 bg-red-50 px-3 py-2 rounded-full shadow-sm">about 0.000001% chance (extremely low)</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-xl shadow-md border-2 border-yellow-300">
+                        <span class="text-gray-800 font-medium flex items-center">
+                            <span class="text-2xl mr-2">📊</span>
+                            Raw score 0 becomes
+                        </span>
+                        <span class="font-bold text-yellow-700 bg-yellow-50 px-3 py-2 rounded-full shadow-sm">50% chance (neutral)</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gradient-to-r from-green-100 to-green-200 rounded-xl shadow-md border-2 border-green-300">
+                        <span class="text-gray-800 font-medium flex items-center">
+                            <span class="text-2xl mr-2">📈</span>
+                            Raw score +25 becomes
+                        </span>
+                        <span class="font-bold text-green-700 bg-green-50 px-3 py-2 rounded-full shadow-sm">99.999999% chance (extremely high)</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-gradient-to-r from-white to-purple-50 rounded-lg border-l-4 border-purple-400 shadow-md">
+                    <p class="text-gray-700 font-medium flex items-center">
+                        <span class="text-2xl mr-2">🎓</span>
+                        It's like converting test scores to letter grades - makes it easier to understand.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decision Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent mb-4 flex items-center">
+                <span class="bg-gradient-to-r from-orange-400 to-red-400 rounded-full w-10 h-10 flex items-center justify-center text-white text-sm font-bold mr-3 shadow-lg">4</span>
+                ⚖️ Decision - Like Pass or Fail
+            </h2>
+            
+            <div class="bg-gradient-to-br from-orange-100 via-red-50 to-orange-200 p-6 rounded-xl mb-4 border-2 border-orange-300 shadow-lg">
+                <p class="text-gray-800 mb-4 text-lg font-medium">
+                    Finally, you compare the probabilities:
+                </p>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start p-4 bg-gradient-to-r from-white to-red-50 rounded-xl border-2 border-red-200 shadow-md">
+                        <span class="text-red-500 mr-3 mt-1 text-2xl">❌</span>
+                        <span class="text-gray-800 font-medium">If there's a <span class="font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">15% chance the restaurant is good</span> and <span class="font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">85% chance it's bad</span>, you choose <strong class="text-red-700 text-xl">"BAD"</strong></span>
+                    </div>
+                    <div class="flex items-start p-4 bg-gradient-to-r from-white to-green-50 rounded-xl border-2 border-green-200 shadow-md">
+                        <span class="text-green-500 mr-3 mt-1 text-2xl">✅</span>
+                        <span class="text-gray-800 font-medium">If there's a <span class="font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">75% chance it's good</span> and <span class="font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">25% chance it's bad</span>, you choose <strong class="text-green-700 text-xl">"GOOD"</strong></span>
+                    </div>
+                    <div class="flex items-start p-4 bg-gradient-to-r from-white to-blue-50 rounded-xl border-2 border-blue-200 shadow-md">
+                        <span class="text-blue-500 mr-3 mt-1 text-2xl">🏆</span>
+                        <span class="text-gray-800 font-medium"><strong class="text-blue-700">Whichever probability is higher wins</strong>, just like picking the restaurant with the better health grade</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Process -->
+        <div class="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-8 rounded-2xl border-4 border-gradient-to-r from-indigo-300 to-pink-300 shadow-2xl">
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center">
+                <span class="text-3xl mr-3">🧠</span>
+                How the System Learns
+            </h3>
+            <p class="text-gray-800 text-lg leading-relaxed font-medium bg-white p-4 rounded-lg shadow-md border-l-4 border-indigo-400">
+                The whole system learns by seeing thousands of restaurants and their actual outcomes, gradually getting better at predicting which ones will make people sick.
+            </p>
+        </div>
     </div>
 
     <div id="sample-prompts" class="mb-4 text-gray-700"></div>
@@ -44,6 +204,7 @@
             </div>
         </div>
     </div>
+<hr/>
 
   <script>
     let testData = [];
@@ -192,5 +353,8 @@
       loadToxicity();
     });
   </script>
+  <hr/>
+
+
 </body>
 </html>

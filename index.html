@@ -42,7 +42,7 @@
   <script>
     let testData = [];
     async function loadTestData() {
-      const res = await fetch('test_data.json');
+      const res = await fetch('/test_data.json');
       testData = (await res.json()).test_cases;
       renderSamplePrompts();
     }

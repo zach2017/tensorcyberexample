@@ -1,0 +1,73 @@
+{
+  "test_cases": [
+    {
+      "text": "I will attack the system at midnight",
+      "expected_label": "threat",
+      "description": "Explicit threat with specific timing",
+      "type": "software",
+      "mitre_tactic": "TA0001 (Initial Access)",
+      "labels": { "CWE": "CWE-94", "Quality": "Critical", "Code": "ThreatDetectionV2", "Hardware": "N/A" }
+    },
+    {
+      "text": "Have a nice day!",
+      "expected_label": "non-threat",
+      "description": "Positive greeting",
+      "type": "human",
+      "labels": { "CWE": "None", "Quality": "Normal", "Code": "ThreatDetectionV2", "Hardware": "N/A" }
+    },
+    {
+      "text": "Planning to cause harm tomorrow",
+      "expected_label": "threat",
+      "description": "Threat with future intent",
+      "type": "human",
+      "mitre_tactic": "TA0040 (Impact)",
+      "labels": { "CWE": "CWE-94", "Quality": "Critical", "Code": "ThreatDetectionV2", "Hardware": "N/A" }
+    },
+    {
+      "text": "The server is in danger of crashing",
+      "expected_label": "threat",
+      "description": "Technical threat without explicit intent",
+      "type": "server",
+      "mitre_tactic": "TA0005 (Defense Evasion)",
+      "labels": { "CWE": "CWE-119", "Quality": "High", "Code": "ServerMonitorV2", "Hardware": "Dell PowerEdge R740" }
+    },
+    {
+      "text": "SQL injection detected in user input",
+      "expected_label": "threat",
+      "description": "Potential SQL injection attack",
+      "type": "software",
+      "mitre_tactic": "TA0006 (Credential Access)",
+      "labels": { "CWE": "CWE-89", "Quality": "Critical", "Code": "WebAppGuard", "Hardware": "N/A" }
+    },
+    {
+      "text": "Large number of failed login attempts",
+      "expected_label": "threat",
+      "description": "Brute-force credential attempts",
+      "type": "network",
+      "mitre_tactic": "TA0006 (Credential Access)",
+      "labels": { "CWE": "CWE-307", "Quality": "High", "Code": "AuthMonitor", "Hardware": "Cisco ASA" }
+    },
+    {
+      "text": "Reset your password to secure your account",
+      "expected_label": "non-threat",
+      "description": "Security advice",
+      "type": "software",
+      "labels": { "CWE": "None", "Quality": "Normal", "Code": "UserGuidance", "Hardware": "N/A" }
+    },
+    {
+      "text": "DDoS attack incoming from multiple IPs",
+      "expected_label": "threat",
+      "description": "Distributed denial-of-service warning",
+      "type": "network",
+      "mitre_tactic": "TA0040 (Impact)",
+      "labels": { "CWE": "N/A", "Quality": "Critical", "Code": "NetShield", "Hardware": "Juniper SRX" }
+    },
+    {
+      "text": "Looking forward to the team meeting",
+      "expected_label": "non-threat",
+      "description": "Positive professional context",
+      "type": "human",
+      "labels": { "CWE": "None", "Quality": "Normal", "Code": "ThreatDetectionV2", "Hardware": "N/A" }
+    }
+  ]
+}

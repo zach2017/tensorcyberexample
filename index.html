@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enhanced Threat Detection</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script>
+  <style>
+    body { font-family: Arial,sans-serif; max-width:800px; margin:0 auto; padding:20px; background:#f4f4f9; }
+    h1 { text-align:center; color:#333; }
+    textarea, pre { width:100%; font-size:14px; margin:10px 0; padding:10px; border-radius:4px; }
+    textarea { height:100px; font-family:inherit; }
+    button { padding:10px 20px; background:#007bff; color:#fff; border:none; cursor:pointer; font-size:16px; }
+    button:hover { background:#0056b3; }
+    pre { background:#fff; border:1px solid #ddd; white-space:pre-wrap; font-family:monospace; }
+    .threat { color:red; font-weight:bold; }
+    .non-threat { color:green; font-weight:bold; }
+    #sample-prompts { margin:10px 0; }
+    .sample-prompt { display:inline-block; margin:5px; padding:8px 12px; background:#e9ecef; border-radius:5px; cursor:pointer; font-size:14px; }
+    .sample-prompt:hover { background:#d1d4d7; }
+    .explanation { background:#eef; padding:10px; margin:10px 0; border-left:4px solid #88f; }
+  </style>
+</head>
+<body>
+  <h1>Enhanced Threat Detection and Contextual Analysis</h1>
+  <div class="explanation">
+    <strong>How it works:</strong>
+    <ul>
+      <li><strong>Feature Extraction</strong>: Converts text into numeric inputs—word count (normalized), weighted keyword score, CWE/ATT&CK flags from metadata.</li>
+      <li><strong>Linear Model (Logits)</strong>: Applies weights & bias (<code>logits = features·weights + bias</code>), computing raw scores.</li>
+      <li><strong>Activation (Sigmoid)</strong>: Transforms logits into class probabilities (<code>sigmoid(x) = 1/(1+e<sup>-x</sup>)</code>).</li>
+      <li><strong>Decision</strong>: Compare P(threat) vs. P(non-threat); the higher wins.</li>
+    </ul>
+  </div>
+
+  <div id="sample-prompts">Loading examples…</div>
+  <textarea id="inputText" placeholder="Enter text to analyze…"></textarea>
+  <button onclick="analyzeText()">Analyze</button>
+  <pre id="results"></pre>
+
+  <script>
+    let testData = [];
+    async function loadTestData() {
+      const res = await fetch('test_data.json');
+      testData = (await res.json()).test_cases;
+      renderSamplePrompts();
+    }
+
+    function renderSamplePrompts() {
+      const c = document.getElementById('sample-prompts');
+      c.innerHTML = '<strong>Try these:</strong><br>';
+      testData.forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'sample-prompt';
+        span.textContent = t.text;
+        span.onclick = () => document.getElementById('inputText').value = t.text;
+        c.appendChild(span);
+      });
+    }
+
+    const modelWeights = {
+      weights: tf.tensor2d([
+        [ 0.5, -0.3],   // word count weight
+        [-0.1,  0.4],   // keyword score weight
+        [ 0.2, -0.2],   // CWE flag weight
+        [ 0.1, -0.1]    // MITRE flag weight
+      ]),
+      bias: tf.tensor1d([-0.1, 0.1])
+    };
+
+    /**
+     * Feature Extraction:
+     * - wc_norm: word count / 100
+     * - kw_score: (raw keyword matches * 2) / 5 (higher weight for key phrases)
+     * - hasCwe: 1 if JSON metadata tag exists
+     * - hasMitre: 1 if ATT&CK code present in text
+     */
+    function extractFeatures(text, hasCweFlag) {
+      const words = text.toLowerCase().split(/\s+/);
+      const wc_norm = words.length / 100;
+      const keywords = ['attack','threat','harm','danger','kill','sql','ddos','injection','login'];
+      const countRaw = words.filter(w => keywords.includes(w)).length;
+      const kw_score = (countRaw * 2) / 5;
+      const hasMitre = /TA\d{4}/i.test(text) ? 1 : 0;
+      return tf.tensor2d([[wc_norm, kw_score, hasCweFlag, hasMitre]]);
+    }
+
+    function getContextualAnalysis(text) {
+      const matches = text.toLowerCase().match(/attack|threat|harm|danger|kill|sql|ddos|login/g) || [];
+      return {
+        keyPhrases: matches.join(', ') || 'None',
+        sentiment: matches.length ? 'Negative' : 'Neutral/Positive',
+        wordCount: text.split(/\s+/).length
+      };
+    }
+
+    /**
+     * Predict threat vs. non-threat by comparing probabilities:
+     * - Apply linear model + sigmoid
+     * - pThreat = sigmoid(logitThreat), pNon = sigmoid(logitNon)
+     * - isThreat = pThreat > pNon
+     */
+    async function predictThreat(inputTensor) {
+      const logits = inputTensor.matMul(modelWeights.weights).add(modelWeights.bias);
+      const [log0, log1] = await logits.data();
+      const [p0, p1] = await tf.sigmoid(logits).data();
+      const isThreat = p0 > p1;
+      return { isThreat, pThreat: p0, pNonThreat: p1, logitThreat: log0, logitNon: log1 };
+    }
+
+    let toxModel;
+    async function loadToxicity() { toxModel = await toxicity.load(); }
+
+    async function analyzeText() {
+      const txt = document.getElementById('inputText').value.trim();
+      if (!txt) return document.getElementById('results').innerText = 'Please enter some text.';
+
+      const meta = testData.find(t => t.text === txt);
+      const hasCweFlag = meta && meta.labels.CWE && !['None','N/A'].includes(meta.labels.CWE) ? 1 : 0;
+
+      const features = extractFeatures(txt, hasCweFlag);
+      const fv = await features.data();
+
+      const { isThreat, pThreat, pNonThreat, logitThreat, logitNon } = await predictThreat(features);
+      const ctx = getContextualAnalysis(txt);
+
+      let toxRes = 'Loading...';
+      if (toxModel) {
+        const preds = await toxModel.classify([txt]);
+        const t = preds.find(p => p.label === 'toxicity');
+        toxRes = t ? `${(t.results[0].probabilities[1]*100).toFixed(1)}%` : 'N/A';
+      }
+
+      let out = '';
+      out += '--- Feature Vector ---\n';
+      out += `WC_norm: ${fv[0].toFixed(3)}, KW_score: ${fv[1].toFixed(3)}, CWE_flag: ${fv[2]}, MITRE_flag: ${fv[3]}\n\n`;
+      out += '--- Logits (raw) ---\n';
+      out += `Threat: ${logitThreat.toFixed(3)}, Non-threat: ${logitNon.toFixed(3)}\n\n`;
+      out += '--- Probabilities (sigmoid) ---\n';
+      out += `P(threat): ${(pThreat*100).toFixed(1)}%, P(non-threat): ${(pNonThreat*100).toFixed(1)}%\n\n`;
+      out += '--- Decision ---\n';
+      out += isThreat ? 'Classified as: THREAT' : 'Classified as: NON-THREAT';
+      out += ` (Confidence: ${(Math.max(pThreat, pNonThreat)*100).toFixed(1)}%)\n\n`;
+
+      out += '--- Contextual Analysis ---\n';
+      out += `Key Phrases: ${ctx.keyPhrases}\nSentiment: ${ctx.sentiment}\nWord Count: ${ctx.wordCount}\n\n`;
+      out += `--- Toxicity ---\n${toxRes}\n\n`;
+
+      if (meta) {
+        out += '--- Metadata ---\n';
+        out += `Type: ${meta.type}\nMITRE: ${meta.mitre_tactic || 'N/A'}\n`;
+        out += `CWE: ${meta.labels.CWE}, Quality: ${meta.labels.Quality}, Code: ${meta.labels.Code}, Hardware: ${meta.labels.Hardware}\n`;
+      }
+
+      document.getElementById('results').innerText = out;
+    }
+
+    window.addEventListener('load', () => {
+      loadTestData();
+      loadToxicity();
+    });
+  </script>
+</body>
+</html>

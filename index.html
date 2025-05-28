@@ -4,40 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Enhanced Threat Detection</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script>
-  <style>
-    body { font-family: Arial,sans-serif; max-width:800px; margin:0 auto; padding:20px; background:#f4f4f9; }
-    h1 { text-align:center; color:#333; }
-    textarea, pre { width:100%; font-size:14px; margin:10px 0; padding:10px; border-radius:4px; }
-    textarea { height:100px; font-family:inherit; }
-    button { padding:10px 20px; background:#007bff; color:#fff; border:none; cursor:pointer; font-size:16px; }
-    button:hover { background:#0056b3; }
-    pre { background:#fff; border:1px solid #ddd; white-space:pre-wrap; font-family:monospace; }
-    .threat { color:red; font-weight:bold; }
-    .non-threat { color:green; font-weight:bold; }
-    #sample-prompts { margin:10px 0; }
-    .sample-prompt { display:inline-block; margin:5px; padding:8px 12px; background:#e9ecef; border-radius:5px; cursor:pointer; font-size:14px; }
-    .sample-prompt:hover { background:#d1d4d7; }
-    .explanation { background:#eef; padding:10px; margin:10px 0; border-left:4px solid #88f; }
-  </style>
 </head>
-<body>
-  <h1>Enhanced Threat Detection and Contextual Analysis</h1>
-  <div class="explanation">
-    <strong>How it works:</strong>
-    <ul>
-      <li><strong>Feature Extraction</strong>: Converts text into numeric inputs—word count (normalized), weighted keyword score, CWE/ATT&CK flags from metadata.</li>
-      <li><strong>Linear Model (Logits)</strong>: Applies weights & bias (<code>logits = features·weights + bias</code>), computing raw scores.</li>
-      <li><strong>Activation (Sigmoid)</strong>: Transforms logits into class probabilities (<code>sigmoid(x) = 1/(1+e<sup>-x</sup>)</code>).</li>
-      <li><strong>Decision</strong>: Compare P(threat) vs. P(non-threat); the higher wins.</li>
-    </ul>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased">
+  <div class="max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-extrabold text-center text-gray-900 mb-6">Enhanced Threat Detection and Contextual Analysis</h1>
+
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+      <strong class="block text-lg text-blue-700 mb-2">How it works:</strong>
+      <ul class="list-disc list-inside space-y-1 text-gray-700">
+        <li><strong>Feature Extraction</strong>: Converts text into numeric inputs—word count (normalized), weighted keyword score, CWE/ATT&CK flags from metadata.</li>
+        <li><strong>Linear Model (Logits)</strong>: Applies weights & bias (<code class="bg-gray-100 px-1 rounded">logits = features·weights + bias</code>), computing raw scores.</li>
+        <li><strong>Activation (Sigmoid)</strong>: Transforms logits into class probabilities (<code class="bg-gray-100 px-1 rounded">sigmoid(x) = 1/(1+e<sup>-x</sup>)</code>).</li>
+        <li><strong>Decision</strong>: Compare P(threat) vs. P(non-threat); the higher wins.</li>
+      </ul>
+    </div>
+
+    <div id="sample-prompts" class="mb-4 text-gray-700"></div>
+    <textarea id="inputText" class="block w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent mb-4" placeholder="Enter text to analyze…"></textarea>
+    <button   id="triggerButton"  onclick="handleButtonClick()" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-6">
+      Analyze
+    </button>
+    <pre id="results" class="p-4 bg-white border border-gray-200 rounded whitespace-pre-wrap font-mono"></pre>
   </div>
 
-  <div id="sample-prompts">Loading examples…</div>
-  <textarea id="inputText" placeholder="Enter text to analyze…"></textarea>
-  <button onclick="analyzeText()">Analyze</button>
-  <pre id="results"></pre>
+    <div id="workingPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl border-4 border-blue-500 max-w-sm w-full mx-4 transform transition-all duration-300">
+            <div class="flex flex-col items-center">
+                <!-- Spinner -->
+                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-500 mb-6"></div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Working...</h2>
+                <p class="text-gray-600 text-center">Please wait while we process your request</p>
+                <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full animate-pulse" style="width: 60%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
   <script>
     let testData = [];
@@ -49,10 +55,10 @@
 
     function renderSamplePrompts() {
       const c = document.getElementById('sample-prompts');
-      c.innerHTML = '<strong>Try these:</strong><br>';
+      c.innerHTML = '<strong class="text-gray-900">Try these:</strong>';
       testData.forEach(t => {
         const span = document.createElement('span');
-        span.className = 'sample-prompt';
+        span.className = 'inline-block bg-gray-200 hover:bg-gray-300 text-sm text-gray-800 px-3 py-1 m-1 rounded border border-gray-300 cursor-pointer';
         span.textContent = t.text;
         span.onclick = () => document.getElementById('inputText').value = t.text;
         c.appendChild(span);
@@ -69,13 +75,6 @@
       bias: tf.tensor1d([-0.1, 0.1])
     };
 
-    /**
-     * Feature Extraction:
-     * - wc_norm: word count / 100
-     * - kw_score: (raw keyword matches * 2) / 5 (higher weight for key phrases)
-     * - hasCwe: 1 if JSON metadata tag exists
-     * - hasMitre: 1 if ATT&CK code present in text
-     */
     function extractFeatures(text, hasCweFlag) {
       const words = text.toLowerCase().split(/\s+/);
       const wc_norm = words.length / 100;
@@ -95,12 +94,6 @@
       };
     }
 
-    /**
-     * Predict threat vs. non-threat by comparing probabilities:
-     * - Apply linear model + sigmoid
-     * - pThreat = sigmoid(logitThreat), pNon = sigmoid(logitNon)
-     * - isThreat = pThreat > pNon
-     */
     async function predictThreat(inputTensor) {
       const logits = inputTensor.matMul(modelWeights.weights).add(modelWeights.bias);
       const [log0, log1] = await logits.data();
@@ -154,7 +147,45 @@
       }
 
       document.getElementById('results').innerText = out;
+      return out
     }
+
+       const triggerButton = document.getElementById('triggerButton');
+        const workingPopup = document.getElementById('workingPopup');
+        const resultDiv = document.getElementById('results');
+
+     async function handleButtonClick() {
+            // Disable button and show popup
+            triggerButton.disabled = true;
+            triggerButton.classList.add('opacity-50', 'cursor-not-allowed');
+            workingPopup.classList.remove('hidden');
+            
+            // Update result div to show working status
+            resultDiv.innerHTML = 'Working...';
+            resultDiv.className = 'mt-6 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-300 text-center text-yellow-700';
+
+            try {
+                // Call the separate work function and wait for it to complete
+                const result = await analyzeText();
+                
+                // Hide popup
+                workingPopup.classList.add('hidden');
+                
+                // Show success message
+                resultDiv.innerHTML = result;
+                resultDiv.className = 'mt-6 p-4 bg-green-50 rounded-lg border-2 border-green-300 text-center text-green-700 font-semibold';
+                
+            } catch (error) {
+                // Hide popup and show error
+                workingPopup.classList.add('hidden');
+                resultDiv.innerHTML = '❌ Something went wrong!';
+                resultDiv.className = 'mt-6 p-4 bg-red-50 rounded-lg border-2 border-red-300 text-center text-red-700';
+            } finally {
+                // Re-enable button
+                triggerButton.disabled = false;
+                triggerButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
 
     window.addEventListener('load', () => {
       loadTestData();

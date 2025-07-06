@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grocery Finder</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    #qaForm { margin-bottom: 1rem; }
+    #questionInput { min-width: 250px; padding: 5px; }
+    #output { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h3>Grocery Finder</h3>
+
+  <form id="qaForm">
+    <label for="questionInput">What item are you looking for?</label><br>
+    <input type="text" id="questionInput" placeholder="e.g., where the eggs">
+    <button type="submit">Find Item</button>
+  </form>
+
+  <div id="output">Ask a question above to find an item.</div>
+
+  <script>
+    // 1. Define keywords and their corresponding answers.
+    // We can include singular and plural versions.
+    const keywordMap = {
+      'bread': 'Aisle 2',
+      'milk': 'Aisle 3',
+      'eggs': 'Aisle 1',
+      'egg': 'Aisle 1',
+      'apples': 'Produce',
+      'apple': 'Produce'
+    };
+
+    // 2. This function searches the user's question for a keyword.
+    function findAnswer() {
+      const questionInput = document.getElementById('questionInput');
+      const question = questionInput.value.toLowerCase().trim(); // Convert to lowercase
+
+      if (!question) {
+        document.getElementById('output').innerText = 'Please enter an item to find.';
+        return;
+      }
+      
+      let foundAnswer = null;
+
+      // Loop through all our keywords
+      for (const keyword in keywordMap) {
+        // Check if the user's question includes the keyword
+        if (question.includes(keyword)) {
+          foundAnswer = keywordMap[keyword];
+          break; // Stop searching once a keyword is found
+        }
+      }
+
+      // 3. Display the result.
+      let resultText = `I couldn't find that item. Please try asking again with a different name.`;
+      if (foundAnswer) {
+        resultText = `You can find that in: ${foundAnswer}`;
+      }
+      
+      document.getElementById('output').innerText = resultText;
+    }
+
+    // 4. Add an event listener to the form to handle user input.
+    document.getElementById('qaForm').addEventListener('submit', (e) => {
+        e.preventDefault(); // Prevent the form from reloading the page
+        findAnswer();
+    });
+
+  </script>
+</body>
+</html>

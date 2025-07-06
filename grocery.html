@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AI Grocery Finder</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    #qaForm { margin-bottom: 1rem; }
+    #questionInput { min-width: 250px; padding: 5px; }
+    #output { font-weight: bold; }
+  </style>
+  </head>
+  <body>
+    <h3>AI Grocery Finder (Weighted Model)</h3>
+
+    <form id="qaForm">
+      <label for="questionInput">What item are you looking for?</label><br>
+      <input type="text" id="questionInput"
+        placeholder="e.g., where are the eggs">
+      <button type="submit">Find Item</button>
+    </form>
+
+    <div id="output">AI model is training...</div>
+
+   <script>
+    const qaData = [
+      { question: "Where is the bread?", answer: "Aisle 2" }, { question: "Which aisle has bread?", answer: "Aisle 2" }, { question: "you got bread", answer: "Aisle 2" }, { question: "wheres the bread", answer: "Aisle 2" },
+      { question: "Where is the milk?", answer: "Aisle 3" }, { question: "Which aisle has milk?", answer: "Aisle 3" }, { question: "find milk", answer: "Aisle 3" },
+      { question: "Where are the eggs?", answer: "Aisle 1" }, { question: "where is the eggs", answer: "Aisle 1" }, { question: "Do you have eggs?", answer: "Aisle 1" }, { question: "any eggs", answer: "Aisle 1" },
+      { question: "Where are apples?", answer: "Produce" }, { question: "where is apples", answer: "Produce" }, { question: "I need apples", answer: "Produce" }
+    ];
+
+    // --- KEYWORD WEIGHTING ---
+    // Define weights for different types of words. You can tune these.
+    const keywordWeights = {
+      // **FIX:** Increased item weight to force the model to prioritize it.
+      item: 50.0,      
+      question: 2.0,   
+      default: 1.0       
+    };
+
+    const itemKeywords = new Set(['bread', 'milk', 'eggs', 'egg', 'apples', 'apple']);
+    const questionKeywords = new Set(['where', 'what', 'which', 'who', 'when', 'how', 'can', 'need', 'find', 'get']);
+    // --- END OF WEIGHTING ---
+
+    const uniqueAnswers = Array.from(new Set(qaData.map(item => item.answer)));
+    const vocab = Array.from(new Set(qaData.flatMap(item => item.question.toLowerCase().match(/\w+/g))));
+    const word2idx = Object.fromEntries(vocab.map((word, i) => [word, i]));
+
+    function sentenceToWeightedVector(sentence) {
+      const tokens = sentence.toLowerCase().match(/\w+/g) || [];
+      const vector = new Array(vocab.length).fill(0);
+      for (const token of tokens) {
+        if (token in word2idx) {
+          const index = word2idx[token];
+          if (itemKeywords.has(token)) {
+            vector[index] = keywordWeights.item;
+          } else if (questionKeywords.has(token)) {
+            vector[index] = keywordWeights.question;
+          } else {
+            vector[index] = keywordWeights.default;
+          }
+        }
+      }
+      return vector;
+    }
+
+    const inputs = qaData.map(item => sentenceToWeightedVector(item.question));
+    const outputs = qaData.map(item => uniqueAnswers.indexOf(item.answer));
+
+    const inputTensor = tf.tensor2d(inputs);
+    const outputTensor = tf.tensor1d(outputs, 'float32');
+
+    const model = tf.sequential();
+    model.add(tf.layers.dense({
+      units: 16,
+      activation: 'relu',
+      inputShape: [vocab.length]
+    }));
+    model.add(tf.layers.dense({
+      units: uniqueAnswers.length,
+      activation: 'softmax'
+    }));
+
+    model.compile({
+      optimizer: 'adam',
+      loss: 'sparseCategoricalCrossentropy',
+      metrics: ['accuracy']
+    });
+
+    async function trainModel() {
+      await model.fit(inputTensor, outputTensor, {
+        epochs: 80,
+        shuffle: true,
+        callbacks: {
+            onEpochEnd: (epoch, logs) => console.log(`Epoch ${epoch}: Loss = ${logs.loss.toFixed(4)}, Acc = ${logs.acc.toFixed(4)}`)
+        }
+      });
+      console.log("Training finished.");
+      document.getElementById('output').innerText = 'AI is ready. Ask a question!';
+    }
+
+    function predict() {
+      const questionInput = document.getElementById('questionInput');
+      const question = questionInput.value.toLowerCase().trim();
+
+      if (!question) {
+        document.getElementById('output').innerText = 'Please enter a question.';
+        return;
+      }
+      
+      const containsKnownItem = Array.from(itemKeywords).some(keyword => question.includes(keyword));
+
+      if (!containsKnownItem) {
+        document.getElementById('output').innerText = "I don't recognize that item. Please ask about bread, milk, eggs, or apples.";
+        return;
+      }
+      
+      tf.tidy(() => {
+        const inputVector = sentenceToWeightedVector(question);
+        const input = tf.tensor2d([inputVector]);
+        const prediction = model.predict(input);
+        const predIdx = prediction.argMax(-1).dataSync()[0];
+        const predictedAnswer = uniqueAnswers[predIdx];
+        
+        document.getElementById('output').innerText = `I think the answer is: ${predictedAnswer}`;
+      });
+    }
+
+    document.getElementById('qaForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        predict();
+    });
+
+    trainModel();
+  </script>
+  </body>
+</html>

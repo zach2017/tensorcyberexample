@@ -1,0 +1,39 @@
+const qaData = [
+  // Bread variations
+  { question: "Where is the bread?", answer: "Aisle 2" },
+  { question: "Which aisle has bread?", answer: "Aisle 2" },
+  { question: "Can you tell me where bread is?", answer: "Aisle 2" },
+  { question: "I need bread. Where do I find it?", answer: "Aisle 2" },
+  { question: "Where can I get bread?", answer: "Aisle 2" },
+  { question: "What aisle is bread in?", answer: "Aisle 2" },
+  { question: "Bread is in which aisle?", answer: "Aisle 2" },
+
+  // Milk variations
+  { question: "Where is the milk?", answer: "Aisle 3" },
+  { question: "Which aisle has milk?", answer: "Aisle 3" },
+  { question: "Can you tell me where milk is?", answer: "Aisle 3" },
+  { question: "I need milk. Where do I find it?", answer: "Aisle 3" },
+  { question: "Where can I get milk?", answer: "Aisle 3" },
+  { question: "What aisle is milk in?", answer: "Aisle 3" },
+  { question: "Milk is in which aisle?", answer: "Aisle 3" },
+
+  // Eggs variations
+  { question: "Do you have eggs?", answer: "Aisle 1" },
+  { question: "Where are the eggs?", answer: "Aisle 1" },
+  { question: "Which aisle has eggs?", answer: "Aisle 1" },
+  { question: "Can you tell me where eggs are?", answer: "Aisle 1" },
+  { question: "I need eggs. Where do I find them?", answer: "Aisle 1" },
+  { question: "Where can I find eggs?", answer: "Aisle 1" },
+  { question: "What aisle are eggs in?", answer: "Aisle 1" },
+  { question: "Eggs are in which aisle?", answer: "Aisle 1" },
+
+  // Apples variations
+  { question: "Where are apples?", answer: "Produce" },
+  { question: "Which section has apples?", answer: "Produce" },
+  { question: "Can you tell me where apples are?", answer: "Produce" },
+  { question: "I need apples. Where do I find them?", answer: "Produce" },
+  { question: "Where can I get apples?", answer: "Produce" },
+  { question: "What section are apples in?", answer: "Produce" },
+  { question: "Apples are in which section?", answer: "Produce" },
+  { question: "Where do you keep the apples?", answer: "Produce" }
+];
